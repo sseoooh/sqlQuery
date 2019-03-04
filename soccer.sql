@@ -1,0 +1,423 @@
+
+
+
+
+
+SELECT * FROM TAB;
+DROP VIEW TEAM;
+DESC TEAM
+CREATE VIEW TE AS
+    SELECT TEAM_ID TID,
+    REGION_NAME RNAME,
+    TEAM_NAME TNAME,
+    E_TEAM_NAME ETNAME,
+    ORIG_YYYY OYYY,
+    STADIUM_ID SID,
+    ZIP_CODE1 ZCODE1,
+    ZIP_CODE2 ZCODE2,
+    ADDRESS ADDRESS,
+    DDD DDD,
+    TEL TEL,
+    FAX FAX,
+    HOMEPAGE HPAGE,
+    OWNER OWNER
+FROM TEAM;
+
+DROP VIEW PL;
+DESC PLAYER
+CREATE VIEW PL AS    
+    SELECT WEIGHT WEIGHT,
+    SOLAR SOLAR,
+    POSITION POSITION,
+    PLAYER_NAME PNAME,
+    PLAYER_ID PID,
+    NICKNAME NNAME,
+    NATION NATION,
+    JOIN_YYYY JYYYY,
+    HEIGHT HEIGHT,
+    E_PLAYER_NAME EPNAME,
+    BIRTH_DATE BDATE,
+    BACK_NO BNO,
+    TEAM_ID TID
+FROM PLAYER;
+
+DESC STADIUM
+CREATE VIEW ST AS
+    SELECT STADIUM_NAME SNAME,
+    STADIUM_ID SID,
+    SEAT_COUNT SCOUNT,
+    HOMETEAM_ID HID,
+    DDD DDD,
+    ADDRESS ADDRESS
+FROM STADIUM;
+
+DESC SCHEDULE
+CREATE VIEW SC AS
+    SELECT STADIUM_ID SID,
+    SCHE_DATE SDATE,
+    HOMETEAM_ID HID,
+    HOME_SCORE HSCORE,
+    GUBUN GUBUN,
+    AWAYTEAM_ID AID,
+    AWAY_SCORE ASCORE
+FROM SCHEDULE;   
+
+
+
+-- SQL_TEST_001
+-- 전체 축구팀 목록. 이름 오름차순
+SELECT T.TNAME "전체 축구팀 목록"
+FROM TE T
+ORDER BY T.TNAME ASC;
+
+-- SQL_TEST_002
+-- 포지션 종류(중복제거,없으면 빈공간)
+SELECT DISTINCT POSITION 포지션
+FROM PL P;
+
+
+-- SQL_TEST_003
+-- 포지션 종류(중복제거,없으면 신입으로 기재)
+-- nvl2()사용
+SELECT DISTINCT NVL2(P.POSITION, P.POSITION, '신입')
+FROM PL P;
+
+SELECT * FROM PLAYER;
+SELECT * FROM TEAM;
+SELECT * FROM STADIUM;
+SELECT * FROM SCHEDULE;
+
+-- SQL_TEST_004
+-- 수원팀(ID: K02)골키퍼
+SELECT P.PNAME 이름
+FROM PL P
+WHERE P.TID LIKE 'K02' AND P.POSITION LIKE 'GK'
+ORDER BY P.PNAME;
+
+-- SQL_TEST_005
+-- 수원팀(ID: K02)키가 170 이상 선수
+-- 이면서 성이 고씨인 선수
+SELECT P.POSITION 포지션, P.PNAME 이름
+FROM PL P
+WHERE P.TID LIKE 'K02' AND P.HEIGHT >= 170 AND P.PNAME LIKE '고%';
+
+-- SQL_TEST_006
+-- 수원팀(ID: K02) 선수들 이름,
+-- 키와 몸무게 리스트 (단위 cm 와 kg 삽입)
+-- 키와 몸무게가 없으면 "0" 표시
+-- 키 내림차순
+SELECT CONCAT(P.PNAME,'선수')이름,
+    TO_CHAR(NVL2(P.HEIGHT,P.HEIGHT,0)||'cm')키,
+    TO_CHAR(NVL2(P.WEIGHT,P.HEIGHT,0)||'kg')몸무게 
+FROM PL P
+WHERE P.TID LIKE 'K02'
+ORDER BY P.HEIGHT DESC;
+
+-- SQL_TEST_007
+-- 수원팀(ID: K02) 선수들 이름,
+-- 키와 몸무게 리스트 (단위 cm 와 kg 삽입)
+-- 키와 몸무게가 없으면 "0" 표시
+-- BMI지수 
+-- 키 내림차순
+SELECT * FROM PLAYER;
+SELECT CONCAT(PNAME,'선수')이름,
+    TO_CHAR(NVL2(HEIGHT,HEIGHT,0)||'cm')키,
+    TO_CHAR(NVL2(WEIGHT,WEIGHT,0)||'kg')몸무게,
+    ROUND(WEIGHT/(HEIGHT*HEIGHT)*10000,2) "BIM 지수"
+FROM (SELECT PNAME, HEIGHT, WEIGHT
+      FROM PL P
+      WHERE P.TID LIKE 'K02') 
+ORDER BY HEIGHT DESC;
+
+-- SQL_TEST_008
+-- 수원팀(ID: K02) 과 대전팀(ID: K10)선수들 중 
+--  포지션이 GK 인  선수
+-- 팀명, 사람명 오름차순
+SELECT T.TNAME, P.POSITION, P.PNAME
+FROM PL P
+    JOIN TE T
+ON P.TID LIKE T.TID
+WHERE P.TID IN ('K02', 'K10') AND P.POSITION LIKE 'GK'
+ORDER BY T.TNAME, P.PNAME ASC;
+
+-- SQL_TEST_009
+-- 수원팀(ID: K02) 과 대전팀(ID: K10)선수들 중 이
+-- 키가 180 이상 183 이하인 선수들
+-- 키, 팀명, 사람명 오름차순
+SELECT P.HEIGHT, T.TNAME, P.PNAME
+FROM PL P
+    JOIN TE T
+ON P.TID LIKE T.TID
+WHERE P.TID IN('K02','K10') AND P.HEIGHT BETWEEN 180 AND 183
+ORDER BY P.HEIGHT, T.TNAME, P.PNAME;
+
+SELECT * FROM PLAYER;
+-- SOCCER_SQL_010
+-- 모든 선수들 중
+-- 포지션을 배정받지 못한 선수들의 팀과 이름
+-- 팀명, 사람명 오름차순
+SELECT T.TEAM_NAME 팀명, P.PLAYER_NAME 이름
+FROM (SELECT P.TEAM_ID,P.PLAYER_NAME 
+        FROM PLAYER P WHERE P.POSITION IS NULL) P
+    JOIN TEAM T
+        ON P.TEAM_ID LIKE T.TEAM_ID
+ORDER BY T.TEAM_NAME, P.PLAYER_NAME;
+
+--------------------------------------------------------
+SELECT * FROM PLAYER;
+SELECT * FROM TEAM;
+--------------------------------------------------------
+
+SELECT T.TNAME 팀명, P.PNAME 이름
+FROM PL P
+    JOIN TE T
+    ON P.TID LIKE T.TID
+WHERE P.POSITION IS NULL
+ORDER BY T.TNAME, P.PNAME;
+
+-- SOCCER_SQL_011
+-- 팀과 스타디움을 조인하여
+-- 팀이름, 스타디움 이름 출력
+
+SELECT T.TEAM_NAME 팀명, S.STADIUM_NAME
+FROM TEAM T
+    JOIN STADIUM S
+    ON T.STADIUM_ID LIKE S.STADIUM_ID
+ORDER BY T.TEAM_NAME;
+
+-- SOCCER_SQL_012
+-- 팀과 스타디움, 스케줄을 조인하여
+-- 2012년 3월 17일에 열린 각 경기의 
+-- 팀이름, 스타디움, 어웨이팀 이름 출력
+-- 다중테이블 join 을 찾아서 해결하시오
+
+SELECT TE.TNAME 팀명, ST.SNAME 스타디움, SC.AID 원정팀ID, SC.SDATE 스케줄날짜 
+FROM ST
+    JOIN TE
+    ON ST.SID LIKE TE.SID
+    JOIN SC
+    ON  ST.SID LIKE SC.SID
+WHERE SC.SDATE LIKE '20120317'
+ORDER BY TE.TNAME;
+-------------------------------------------------------------------------------
+SELECT TE.TNAME 팀명, ST.SNAME 스타디움, SC.AID 원정팀ID, SC.SDATE 스케줄날짜 
+FROM ST
+    JOIN TE
+    ON ST.SID LIKE TE.SID
+    JOIN SC
+    ON  ST.SID LIKE SC.SID
+WHERE SC.SDATE LIKE '20120317'
+ORDER BY TE.TNAME;
+
+
+-- SOCCER_SQL_013
+-- 2012년 3월 17일 경기에 
+-- 포항 스틸러스 소속 골키퍼(GK)
+-- 선수, 포지션,팀명 (연고지포함), 
+-- 스타디움, 경기날짜를 구하시오
+-- 연고지와 팀이름은 간격을 띄우시오
+
+SELECT PL.PNAME 선수명, PL.POSITION 포지션, CONCAT('포항 ',TE.TNAME)팀명, ST.SNAME 스타디움,  SC.SDATE 스케줄날짜
+FROM ST
+    JOIN TE
+    ON ST.SID LIKE TE.SID
+    JOIN SC
+    ON ST.SID LIKE SC.SID
+    JOIN PL
+    ON TE.TID LIKE PL.TID
+WHERE SC.SDATE LIKE '20120317' AND TE.TID LIKE 'K03' AND PL.POSITION LIKE 'GK'
+ORDER BY PL.PNAME;
+-------------------------------------------------------------------------------
+SELECT * FROM TEAM;
+SELECT PL.PLAYER_NAME 선수명,
+       PL.POSITION 포지션,
+       CONCAT('포항 ',T.TEAM_NAME)팀명,
+       ST.SNAME 스타디움,
+        SC.SCHE_DATE 스케줄날짜
+FROM ST
+    JOIN (SELECT T.TEAM_NAME, T.TEAM_ID, T.STADIUM_ID
+          FROM TEAM T
+          WHERE T.TEAM_ID LIKE 'K03')T
+    ON ST.SID LIKE T.STADIUM_ID
+    JOIN (SELECT SC.STADIUM_ID, SC.SCHE_DATE
+          FROM SCHEDULE SC
+          WHERE SC.SCHE_DATE LIKE '20120317')SC
+    ON ST.SID LIKE SC.STADIUM_ID
+    JOIN (SELECT PL.POSITION, PL.TEAM_ID, PL.PLAYER_NAME
+          FROM PLAYER PL
+          WHERE PL.POSITION LIKE 'GK')PL
+    ON T.TEAM_ID LIKE PL.TEAM_ID
+ORDER BY PL.PLAYER_NAME;
+
+-- SOCCER_SQL_014
+-- 홈팀이 3점이상 차이로 승리한 경기의 
+-- 경기장 이름, 경기 일정
+-- 홈팀 이름과 원정팀 이름을
+-- 구하시오
+SELECT * FROM TEAM;
+SELECT * FROM STADIUM;
+SELECT * FROM SCHEDULE;
+SELECT * FROM PLAYER;
+SELECT ST.STADIUM_NAME 스타디움,
+       SC.SDATE 경기날짜,
+       TEA.REGION_NAME||' '||TEA.TEAM_NAME 홈팀,
+       TEB.REGION_NAME||' '||TEB.TEAM_NAME 원정팀,
+       SC.HSCORE "홈팀 점수",
+       SC.ASCORE "원정팀 점수"
+FROM SC
+    JOIN (SELECT ST.STADIUM_NAME,
+                 ST.STADIUM_ID
+          FROM STADIUM ST)ST
+    ON SC.SID LIKE ST.STADIUM_ID
+    JOIN (SELECT TEA.REGION_NAME,
+                 TEA.STADIUM_ID,
+                 TEA.TEAM_NAME
+          FROM TEAM TEA) TEA
+    ON SC.SID LIKE TEA.STADIUM_ID
+    JOIN (SELECT TEB.REGION_NAME,
+                 TEB.STADIUM_ID,
+                 TEB.TEAM_NAME
+          FROM TEAM TEB)TEB
+    ON SC.SID LIKE TEB.STADIUM_ID
+WHERE SC.HSCORE>=SC.ASCORE +3
+ORDER BY SC.HSCORE DESC;
+
+
+-------------------------------------------------------------------------------
+
+
+-- SOCCER_SQL_015
+-- STADIUM 에 등록된 운동장 중에서
+-- 홈팀이 없는 경기장까지 전부 나오도록
+-- 카운트 값은 20 
+
+SELECT S.SNAME, S.SID, S.SCOUNT, S.HID, T.ETNAME
+FROM ST S
+    JOIN TE T
+    ON S.SID LIKE T.SID
+ORDER BY S.HID;
+
+-- SOCCER_SQL_016
+-- 평균키가 인천 유나이티스팀의 평균키 보다 작은 팀의 
+-- 팀ID, 팀명, 평균키 추출
+SELECT * FROM TEAM;
+SELECT * FROM STADIUM;
+SELECT * FROM SCHEDULE;
+SELECT * FROM PLAYER;
+
+SELECT TE.TEAM_ID ,
+       TE.TEAM_NAME,
+       ROUND(AVG(PL.HEIGHT),2)평균키
+    FROM TEAM TE
+        JOIN PLAYER PL
+        ON TE.TEAM_ID LIKE PL.TEAM_ID
+GROUP BY TE.TEAM_ID, TE.TEAM_NAME
+HAVING AVG(PL.HEIGHT) < (SELECT AVG(PL.HEIGHT)
+                         FROM TEAM TE
+                            JOIN PLAYER PL
+                            ON TE.TEAM_ID LIKE PL.TEAM_ID
+                         WHERE TE.TEAM_NAME LIKE '유나이티드')
+ORDER BY 평균키;
+        
+   
+-- SOCCER_SQL_017
+-- 포지션이 MF 인 선수들의  소속팀명 및 선수명, 백넘버 출력
+SELECT TE.TEAM_NAME 팀명, PL.PLAYER_NAME 선수명, PL.BACK_NO 백넘버
+FROM PLAYER PL
+    JOIN TEAM TE
+    ON PL.TEAM_ID LIKE TE.TEAM_ID
+WHERE PL.POSITION LIKE 'MF'
+ORDER BY PL.PLAYER_NAME;
+
+-- SOCCER_SQL_018
+-- 가장 키큰 선수 5 추출, 오라클, 단 키 값이 없으면 제외
+SELECT * FROM STADIUM;
+SELECT * FROM TEAM;
+SELECT * FROM SCHEDULE;
+SELECT * FROM PLAYER;
+
+SELECT PL.PLAYER_NAME 선수명,
+       PL.BACK_NO 백넘버,
+       PL.POSITION 포지션,
+       PL.HEIGHT 키
+    FROM (SELECT PL.HEIGHT,
+                 PL.PLAYER_NAME,
+                 PL.BACK_NO,
+                 PL.POSITION
+            FROM PLAYER PL
+          WHERE PL.HEIGHT IS NOT NULL
+          ORDER BY PL.HEIGHT DESC)PL
+WHERE ROWNUM BETWEEN 1 AND 5;
+
+-- SOCCER_SQL_019
+-- 선수 자신이 속한 팀의 평균키보다 작은 선수 정보 출력
+
+
+SELECT TE.TEAM_NAME 팀명,
+       PL.PLAYER_NAME 선수명,
+       PL.POSITION 포지션,
+       PL.BACK_NO 백넘버,
+       PL.HEIGHT 키
+    FROM PLAYER PL
+        JOIN TEAM TE
+    ON PL.TEAM_ID LIKE TE.TEAM_ID
+WHERE PL.HEIGHT < (SELECT AVG(PL2.HEIGHT)
+                   FROM PLAYER PL2
+                   WHERE PL2.TEAM_ID LIKE PL.TEAM_ID)
+ORDER BY PL.PLAYER_NAME;
+
+-- SOCCER_SQL_020
+-- 2012년 5월 한달간 경기가 있는 경기장 조회
+-- EXISTS 쿼리는 항상 연관쿼리로 상요한다.
+-- 또한 아무리 조건을 만족하는 건이 여러 건이라도
+-- 조건을 만족하는 1건만 찾으면 추가적인 검색을 진행하지 않는다.
+
+
+SELECT STADIUM_ID, STADIUM_NAME
+FROM STADIUM ST
+WHERE EXISTS(SELECT 1
+            FROM SCHEDULE SC
+            WHERE SC.STADIUM_ID LIKE ST.STADIUM_ID)
+;
+
+-- SOCCER_SQL_021
+-- 이현 선수 소속팀의 선수명단 출력
+
+
+SELECT PL.PLAYER_NAME 선수명, PL.POSITION 포지션 , PL.BACK_NO 백넘버
+FROM PLAYER PL
+    JOIN TEAM TE
+    ON PL.TEAM_ID LIKE TE.TEAM_ID
+WHERE TE.TEAM_ID LIKE 'K04'
+ORDER BY PL.PLAYER_NAME ASC;
+
+-- SOCCER_SQL_022
+-- NULL 처리에 있어
+-- SUM(NVL(SAL,0)) 로 하지말고
+-- NVL(SUM(SAL),0) 으로 해야 자원낭비가 줄어든다
+ 
+-- 팀별 포지션별 인원수와 팀별 전체 인원수 출력
+ 
+-- Oracle, Simple Case Expr
+SELECT * FROM STADIUM;
+SELECT * FROM TEAM;
+SELECT * FROM SCHEDULE;
+SELECT * FROM PLAYER;
+
+SELECT TEAM_ID,
+    NVL(SUM(CASE POSITION WHEN 'FW' THEN 1 END),0)FW,
+    NVL(SUM(CASE POSITION WHEN 'MF' THEN 1 END),0)MF,
+    NVL(SUM(CASE POSITION WHEN 'DF' THEN 1 END),0)DF,
+    NVL(SUM(CASE POSITION WHEN 'GK' THEN 1 END),0)GK,
+COUNT(*) SUM
+FROM PLAYER PL
+GROUP BY TEAM_ID
+;
+
+
+    
+
+
+
+
+
